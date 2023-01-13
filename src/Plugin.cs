@@ -15,7 +15,7 @@ using UnityEngine;
 
 namespace Hardcore;
 
-[BepInPlugin("com.dual.hardcore", "Hardcore", "0.1.0")]
+[BepInPlugin("com.dual.hardcore", "Hardcore", "1.0.0")]
 sealed class Plugin : BaseUnityPlugin
 {
     private SlugcatStats.Name saveNum;
