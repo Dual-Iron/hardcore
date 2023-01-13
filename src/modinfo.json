@@ -3,7 +3,7 @@
   "name": "Hardcore",
   "version": "0.1.0",
   "authors": "Dual",
-  "description": "- If you die with no karma flower, the game ends permanently.<LINE>- If you quit with no karma flower, your karma drops to its minimum.<LINE>- If you quit with no karma flower and minimum karma, the game ends permanently.<LINE><LINE>While this mod is enabled, the game uses separate save files, so your vanilla save files are safe.",
+  "description": "- Cycles are always their minimum length.<LINE>- Items never respawn. Batflies will replenish normally, however.<LINE>- If you die with no karma flower, the game ends permanently.<LINE>- If you quit with no karma flower, your karma drops to its minimum.<LINE>- If you quit with no karma flower and minimum karma, the game ends permanently.<LINE><LINE>While this mod is enabled, the game uses separate save files, so your vanilla save files are safe.",
   "requirements": [],
   "requirements_names": [],
   "checksum_override_version": false
