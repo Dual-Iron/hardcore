@@ -65,6 +65,9 @@ sealed class Plugin : BaseUnityPlugin
         // Prevent items from ever respawning
         On.RegionState.ReportConsumedItem += RegionState_ReportConsumedItem;
 
+        // Always use minimum cycle time
+        On.RainCycle.ctor += RainCycle_ctor;
+
         // Red karma meter
         On.HUD.KarmaMeter.Draw += KarmaMeter_Draw;
 
@@ -103,6 +106,11 @@ sealed class Plugin : BaseUnityPlugin
     private void RegionState_ReportConsumedItem(On.RegionState.orig_ReportConsumedItem orig, RegionState self, int originRoom, int placedObjectIndex, int waitCycles)
     {
         orig(self, originRoom, placedObjectIndex, waitCycles: int.MaxValue);
+    }
+
+    private void RainCycle_ctor(On.RainCycle.orig_ctor orig, RainCycle self, World world, float minutes)
+    {
+        orig(self, world, world.game.rainWorld.setup.cycleTimeMin / 60f);
     }
 
     private void KarmaMeter_Draw(On.HUD.KarmaMeter.orig_Draw orig, HUD.KarmaMeter self, float timeStacker)
