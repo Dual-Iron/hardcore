@@ -7,5 +7,3 @@
 - If you quit with no karma flower and minimum karma, the game ends permanently.
 
 While this mod is enabled, the game uses separate save files, so your vanilla save files are safe.
-
-Download [here](https://github.com/Dual-Iron/Survival/releases/latest).
