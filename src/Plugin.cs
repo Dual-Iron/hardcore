@@ -62,6 +62,9 @@ sealed class Plugin : BaseUnityPlugin
         // Use new save file to prevent overwriting vanilla
         new Hook(typeof(Options).GetMethod("get_SaveFileName"), GetterSaveFileName);
 
+        // Prevent items from ever respawning
+        On.RegionState.ReportConsumedItem += RegionState_ReportConsumedItem;
+
         // Red karma meter
         On.HUD.KarmaMeter.Draw += KarmaMeter_Draw;
 
@@ -97,26 +100,37 @@ sealed class Plugin : BaseUnityPlugin
         return orig(self) + "_survival";
     }
 
+    private void RegionState_ReportConsumedItem(On.RegionState.orig_ReportConsumedItem orig, RegionState self, int originRoom, int placedObjectIndex, int waitCycles)
+    {
+        orig(self, originRoom, placedObjectIndex, waitCycles: int.MaxValue);
+    }
+
     private void KarmaMeter_Draw(On.HUD.KarmaMeter.orig_Draw orig, HUD.KarmaMeter self, float timeStacker)
     {
         orig(self, timeStacker);
 
-        var redness = self.showAsReinforced ? 0.5f : 0.75f;
-        var brightness = self.showAsReinforced ? 1f : 0.85f;
+        if (self.showAsReinforced) {
+            self.karmaSprite.color = Color.white;
+            self.glowSprite.color = Color.white;
+        }
+        else {
+            const float redness = 0.75f;
+            const float brightness = 0.8f;
 
-        Color color;
+            Color color;
 
-        color = self.karmaSprite.color;
-        color.g = Mathf.Min(color.g, 1 - redness);
-        color.b = Mathf.Min(color.b, 1 - redness);
-        color.r = Mathf.Min(color.r, brightness);
-        self.karmaSprite.color = color;
+            color = self.karmaSprite.color;
+            color.g = Mathf.Min(color.g, 1 - redness);
+            color.b = Mathf.Min(color.b, 1 - redness);
+            color.r = Mathf.Min(color.r, brightness);
+            self.karmaSprite.color = color;
 
-        color = self.glowSprite.color;
-        color.g = Mathf.Min(color.g, 1 - redness);
-        color.b = Mathf.Min(color.b, 1 - redness);
-        color.r = Mathf.Min(color.r, brightness);
-        self.glowSprite.color = color;
+            color = self.glowSprite.color;
+            color.g = Mathf.Min(color.g, 1 - redness);
+            color.b = Mathf.Min(color.b, 1 - redness);
+            color.r = Mathf.Min(color.r, brightness);
+            self.glowSprite.color = color;
+        }
     }
 
     private void RainWorldGame_GameOver(On.RainWorldGame.orig_GameOver orig, RainWorldGame self, Creature.Grasp dependentOnGrasp)
