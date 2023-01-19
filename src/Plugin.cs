@@ -46,7 +46,7 @@ sealed class Plugin : BaseUnityPlugin
         game.manager.musicPlayer?.FadeOutAllSongs(20f);
         p.redsIllness ??= new RedsIllness(p, -1);
         p.redsIllness.fadeOutSlow = true;
-        sess.saveState.AppendCycleToStatistics(p, sess, true);
+        sess.saveState.AppendCycleToStatistics(p, sess, death: true, playerIndex: 0);
         sess.saveState.deathPersistentSaveData.redsDeath = true;
         game.manager.rainWorld.progression.SaveWorldStateAndProgression(false);
         game.manager.RequestMainProcessSwitch(ProcessManager.ProcessID.Statistics, 10f);
@@ -78,6 +78,7 @@ sealed class Plugin : BaseUnityPlugin
         // Fix quitting and dying behavior
         On.DeathPersistentSaveData.SaveToString += DeathPersistentSaveData_SaveToString;
         On.Menu.PauseMenu.Update += PauseMenu_Update;
+        On.Menu.PauseMenu.SpawnConfirmButtons += PauseMenu_SpawnConfirmButtons;
 
         // Fix saving permanent game overs
         new Hook(typeof(StoryGameSession).GetMethod("get_RedIsOutOfCycles"), GetterRedIsOutOfCycles);
@@ -147,32 +148,33 @@ sealed class Plugin : BaseUnityPlugin
             if (dependentOnGrasp != null) {
                 sess.PlaceKarmaFlowerOnDeathSpot();
                 self.manager.musicPlayer?.DeathEvent();
+                return;
             }
-            else {
+            else if (sess.saveState.cycleNumber > 0) {
                 EndGamePermanently(self);
+                return;
             }
-            return;
         }
         orig(self, dependentOnGrasp);
     }
 
     private void TextPrompt_Update(On.HUD.TextPrompt.orig_Update orig, HUD.TextPrompt self)
     {
-        const string pretense = "Paused - Warning! Quitting now ";
-
         orig(self);
-        if (self.currentlyShowing == HUD.TextPrompt.InfoID.Paused && !string.IsNullOrEmpty(self.label.text) && self.pausedWarningText) {
-            if (self.hud.owner is Player player && player.abstractCreature.world.game.IsStorySession && player.abstractCreature.world.game.clock > 1200) {
-                if (player.KarmaIsReinforced)
-                    self.label.text = pretense + "will remove your karma flower";
-                else if (player.Karma > 0)
-                    self.label.text = pretense + "will reset your current karma";
-                else
-                    self.label.text = pretense + "will permanently end your game";
-            }
-            else {
-                self.label.text = "Paused";
-            }
+
+        if (self.currentlyShowing != HUD.TextPrompt.InfoID.Paused) {
+            return;
+        }
+
+        self.label.text = "Paused";
+
+        if (self.hud.owner is Player player && player.abstractCreature.world.game.session is StoryGameSession sess && sess.saveState.cycleNumber > 0 && player.abstractCreature.world.game.clock > 200) {
+            if (player.KarmaIsReinforced)
+                self.label.text = "Paused - Warning! Quitting now will erase your karma flower";
+            else if (player.Karma > 0)
+                self.label.text = "Paused - Warning! Quitting now will reset your current karma";
+            else
+                self.label.text = "Paused - No going back now. You must sleep in a shelter";
         }
     }
 
@@ -205,8 +207,17 @@ sealed class Plugin : BaseUnityPlugin
         orig(self);
 
         // Prevent exiting if karma == 0
-        if (self.game.IsStorySession && self.game.clock >= 200) {
+        if (self.game.session is StoryGameSession sess && sess.saveState.deathPersistentSaveData.karma == 0 && sess.saveState.cycleNumber > 0 && self.game.clock > 200) {
             self.counter = 0;
+        }
+    }
+
+    private void PauseMenu_SpawnConfirmButtons(On.Menu.PauseMenu.orig_SpawnConfirmButtons orig, PauseMenu self)
+    {
+        orig(self);
+
+        if (self.game.IsStorySession) {
+            self.confirmMessage.text = self.confirmMessage.text.Replace("30", "5");
         }
     }
 
